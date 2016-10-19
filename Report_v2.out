@@ -1,0 +1,16 @@
+\BOOKMARK [1][-]{section.1}{Part 3 - Simulating the satellite trajectory}{}% 1
+\BOOKMARK [2][-]{subsection.1.1}{Abstract}{section.1}% 2
+\BOOKMARK [2][-]{subsection.1.2}{Introduction}{section.1}% 3
+\BOOKMARK [2][-]{subsection.1.3}{Theoretical Model}{section.1}% 4
+\BOOKMARK [3][-]{subsubsection.1.3.1}{Calculating the launch}{subsection.1.3}% 5
+\BOOKMARK [3][-]{subsubsection.1.3.2}{Analytic landing calculations}{subsection.1.3}% 6
+\BOOKMARK [2][-]{subsection.1.4}{Methods}{section.1}% 7
+\BOOKMARK [2][-]{subsection.1.5}{Results/Discussion}{section.1}% 8
+\BOOKMARK [2][-]{subsection.1.6}{Conclusion Perspectives}{section.1}% 9
+\BOOKMARK [2][-]{subsection.1.7}{Appendix}{section.1}% 10
+\BOOKMARK [1][-]{section.2}{Part 6 - The atmosphere}{}% 11
+\BOOKMARK [2][-]{subsection.2.1}{Theoretical Model}{section.2}% 12
+\BOOKMARK [3][-]{subsubsection.2.1.1}{Adiabatic model}{subsection.2.1}% 13
+\BOOKMARK [3][-]{subsubsection.2.1.2}{The isothermal region}{subsection.2.1}% 14
+\BOOKMARK [2][-]{subsection.2.2}{Parameters needed for the simulation}{section.2}% 15
+\BOOKMARK [2][-]{subsection.2.3}{Calculating the landing parachute}{section.2}% 16

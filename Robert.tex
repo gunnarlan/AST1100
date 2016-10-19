@@ -1,0 +1,231 @@
+% REMEMBER TO SET LANGUAGE!
+\documentclass[a4paper,10pt,english]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+% Standard stuff
+\usepackage{amsmath,graphicx,varioref,verbatim,amsfonts,geometry}
+% colors in text
+\usepackage[usenames,dvipsnames,svgnames,table]{xcolor}
+% Hyper refs
+\usepackage[colorlinks]{hyperref}
+
+% Document formatting
+\setlength{\parindent}{0mm}
+\setlength{\parskip}{1.5mm}
+
+%Color scheme for listings
+\usepackage{textcomp}
+\definecolor{listinggray}{gray}{0.9}
+\definecolor{lbcolor}{rgb}{0.9,0.9,0.9}
+
+%Listings configuration
+\usepackage{listings}
+%Hvis du bruker noe annet enn python, endre det her for å få riktig highlighting.
+\lstset{
+	backgroundcolor=\color{lbcolor},
+	tabsize=4,
+	rulecolor=,
+	language=python,
+        basicstyle=\scriptsize,
+        upquote=true,
+        aboveskip={1.5\baselineskip},
+        columns=fixed,
+	numbers=left,
+        showstringspaces=false,
+        extendedchars=true,
+        breaklines=true,
+        prebreak = \raisebox{0ex}[0ex][0ex]{\ensuremath{\hookleftarrow}},
+        frame=single,
+        showtabs=false,
+        showspaces=false,
+        showstringspaces=false,
+        identifierstyle=\ttfamily,
+        keywordstyle=\color[rgb]{0,0,1},
+        commentstyle=\color[rgb]{0.133,0.545,0.133},
+        stringstyle=\color[rgb]{0.627,0.126,0.941}
+        }
+        
+\newcounter{subproject}
+\renewcommand{\thesubproject}{\alph{subproject}}
+\newenvironment{subproj}{
+\begin{description}
+\item[\refstepcounter{subproject}(\thesubproject)]
+}{\end{description}}
+
+%Lettering instead of numbering in different layers
+%\renewcommand{\labelenumi}{\alph{enumi}}
+%\renewcommand{\thesubsection}{\alph{subsection}}
+
+%opening
+\title{AST1100 Project}
+\author{Gunnar Lange}
+\begin{document}
+\maketitle
+\section*{Interlude - The habitable zone}
+\subsection*{Introduction}
+In this brief interlude, we will investigate some key properties of the solar system. First, we will investigate the energy which the launcher can receive at the different planets in the solar system. Subsequently, we will derive a general equation for the temperature of a planet, and use this to determine the habitable zone within the solar system.
+\subsection*{Theoretical model}
+\subsubsection*{Determining the solar panels needed}
+We know from Stefan-Boltzmann's law that the flux, $F$, from a star (energy per area per time) is given by:
+$$\phi = \sigma T_*^4$$
+where $\sigma$ is Boltzmann's constant and  $T_*$ is the (absolute) temperature of the star. The total energy per time emitted from the star, $L$, (power) is then given by:
+$$L=A\sigma T_*^4 = 4\pi \sigma R_*^2 T_*^4$$
+Where $R_*$ is the radius of the star. This assumes a uniform flux distribution and a perfectly spherical star. To find the power received at the surface of a planet, it is sufficient to realize that power from the sun will be (approximately) evenly spread out across a sphere of area $4\pi r_p^2$, where $r_p$ is the distance from the center of the star to the planet (only valid for $r_p\geq R_*$). The flux received at the surface of my planet is then given by:
+$$F=\frac{L}{4\pi r_p^2 }$$
+Consequently, my lander receives a power equal to:
+$$P_l=\frac{eLA}{4\pi r_p^2}$$
+Where $A$ is the area of the solar panels and $e$ is a factor accounting for the lack of efficiency of the solar panel. Solving for $A$ gives:
+$$A=\frac{4\pi r_p^2P_l}{eL}=\frac{P_lr_p^2}{e T_*^4\sigma R_*^2}$$
+Which is a general expression for the area needed. 
+\subsection*{Determining the habitable zone}
+From the previous section, it is clear that the power per square meter (Flux) received at the surface of any chosen planet is given by:
+$$F_p=\frac{L}{4\pi r_p}=\frac{\sigma R_*^2 T_*^4}{r_p^2}$$
+To determine the temperature on the planet requires an expression for the amount of area that is hit by the radiation. A crude approximation is to assume that all rays are approximately perpendicular to the planet, seeing as the distance from the planet to the sun is so large. Then the light rays are not affected by the curvature of the planet. This is thus equivalent to hitting a disk of area $\pi R_p^2$, where $R_p$ is the radius of the planet. Thus, using this approximation, it is clear that the total power received by the planet will be equal to:
+$$P_{in}=F_p\pi R_p^2 = \frac{\pi \sigma  T_*^4 R_p^2R_*^2}{r_p^2}$$
+This is the incoming power. However, as the planet heats up it will also radiate. For simplicity, assume the planet is a perfect black body. Then it will radiate according to Stefan-Boltzmann's law, giving the power out as:
+$$P_{out}=4\pi R_p^2 \sigma T_p^4$$
+Where $T_p$ is the temperature of the planet. Assuming that the radiation exchange is in equilibrium, I can now equate power in and power out to get:
+$$\frac{\pi \sigma  T_*^4 R_p^2R_*^2}{r_p^2}=4\pi R_p^2 \sigma T_p^4$$
+Solving for the temperature of the planet, $T_p$, gives, after some algebra:
+$$T_p=T_*\sqrt[4]{\frac{R_*^2}{4r_p^2}}=T_*\sqrt{\frac{R_*}{2r_p}}$$
+The habitable zone is defined as the band around the sun where the temperature is between $260$K and  $390$K.
+\section{Part 3 - Simulating the satellite trajectory}
+\subsection{Abstract}
+\subsection{Introduction}
+In this part, we simulate the launch of the satellite. 
+\subsection{Theoretical Model}
+\subsubsection{Calculating the launch}
+\subsubsection{Analytic landing calculations}
+We will begin by investigating how to manage to get into orbit around our target planet. Whilst the satellite is far from the planet, its motion will be dictated by the gravitational force from the star, whereas the motion will be dictated by the planet once the satellite is close enough to the planet. The interactions from other planets may be ignored for the moment, as they are so much smaller than the other forces acting. Thus there are two forces acting on the satellite. The magnitudes of these are:
+$$F=F_*+F_p=Gm_s\left(\frac{m}{r^2}+\frac{M}{R^2}\right)$$
+The variables appearing in this equation are summarized in the table below:\\
+\begin{tabular}{|c|c|}
+\hline
+$F_*$ & Force from star\\
+\hline
+$F_p$ & Force from planet\\
+\hline
+$G$ & Gravitational constant\\
+\hline
+$m_s$ & Mass of satellite\\
+\hline
+$m$ & Mass of planet\\
+\hline
+$M$ & Mass of star\\
+\hline
+$r$ & Distance to planet\\
+\hline
+$R$ & Distance to star\\
+\hline
+\end{tabular}\\
+Now we wish to investigate at what distance the force from the planet on the satellite is $k$ times larger than the force from the star. This is an approximate threshold value at which a stable orbit is possible. I.e., we want to know when:
+$$F_p=kF_* \implies \frac{m}{r^2}=k\frac{M}{R^2}$$
+Which gives after some algebra:
+\begin{equation}\label{eq:soi_k}
+r=R\sqrt{\frac{m}{Mk}}
+\end{equation}
+Now once we are this close to our target planet, we would like to achieve stable orbit at a distance $r$ from the planet. For this, we ignore the effects of other celestial bodies (assuming that we are close enough to the planet), and get from the equations of circulation motion:
+$$F_p=G\frac{m_sm}{r^2}=m_s a_{cp}=m_s \frac{v^2}{r}$$
+Where $a_{cp}$ is the centripetal acceleration. Doing the algebra gives:
+\begin{equation}
+v=\sqrt{\frac{Gm}{r}}
+\end{equation}
+Note however carefully that this is in fact the velocity \textit{relative to the planet}.\\
+\textbf{INSERT GRAPHIC HERE}\\
+In circular motion, the velocity is always normal to the position vector. Thus the velocity vector is always $\pi/2$ in front of the position vector. The decomposition of the position vector is:
+$$\vec{R}=R\cos \phi \mathbf{i}+R\sin \phi \mathbf{j}$$
+This follows from simple trigonometry. Inserting $\phi+\pi/2$ gives:
+\begin{equation} \label{eq:v_so}
+\vec{v}_{so}=-v_{so}\sin \phi \mathbf{i}+ v_{so}\cos \phi \mathbf{j}
+\end{equation}
+To find the change in velocity needed, assume that the satellite has an initial velocity as shown here:\\
+\textbf{INSERT GRAPHIC HERE}\\
+Note that, for a counter-clockwise orbit, we have to give the satellite a boost that \textit{opposes} the initial velocity $v_0$, and gives it the required orbital velocity from \ref{eq:v_so}. The initial velocity of the satellite may be decomposed as:
+$$\vec{v}_0=v_0\cos \chi \mathbf{i}+v_0\sin \chi \mathbf{j}$$ 
+Which gives the change of velocity as:
+$$\Delta \vec{v}=(-v_{so}\sin \phi-v_0\cos \chi)\mathbf{i}+(v_{so}\cos \phi-v_0\sin \chi)\mathbf{j}$$
+Note, however, that this is again only relative to the planet. The planet moves with a velocity $\vec{v}_{pl}$ relative to the sun, whereas the satellite moves with a velocity $\vec{v}_{sat}$ relative to the sun. However, it is rather easy to relate these - simply add $\vec{v}_{pl}$ to $\vec{v}_{sat}$, to get $\vec{v}_0$. Note that both $\vec{v}_{sat}$ and $\vec{v}_{pl}$ can be obtained from numerical differentiation of the position vectors. A good trade-off between efficiency and accuracy is given by the centered difference method:
+$$f'(x)\approx \frac{f(x+h)-f(x-h)}{2h}$$
+ 
+
+\subsection{Methods}
+\subsection{Results/Discussion}
+\subsection{Conclusion \and Perspectives}
+\subsection{Appendix}
+
+\section{Part 6 - The atmosphere}
+\subsection{Abstract}
+\subsection{Introduction}
+\subsection{Theoretical Model}
+To model the atmosphere, we require two important equations, the ideal gas equation:
+\begin{equation}
+P=\frac{\rho k T}{\mu m_H}
+\end{equation} 
+And the hydrostatic equilibrium equation:
+$$\frac{dP}{dr}=-G\rho(r)\frac{M}{r^2}$$
+We will first model the atmosphere as adiabatic.
+\subsubsection{Adiabatic model}
+Adiabatic means tha the following equation holds:
+\begin{equation}
+P^{1-\gamma}T^\gamma=C
+\end{equation}
+Where $C$ is constant. Now I will differentiate the above equation, according to an idea found here \textbf{REFERENCE UNI TEXAS HERE}. This gives:
+$$\frac{d}{dT}\left(P^{1-\gamma}T^{\gamma}\right)=0$$
+Which can be written out as:
+$$(1-\gamma)P^{-\gamma}T^{\gamma}\frac{dP}{dT}+\gamma T^{\gamma-1}P^{1-\gamma}=0$$
+Which can be rearranged to:
+$$\frac{dP}{dT}=\frac{\gamma}{\gamma-1}\frac{P}{T}$$
+Solving the ideal gas equation for the density gives:
+$$\rho=\frac{\mu m_H}{k}\frac{P}{T}$$
+Inserting:
+$$\rho=\frac{\gamma-1}{\gamma}\frac{\mu m_H}{k}\frac{dP}{dT}$$
+I can now insert this relation into the hydrostatic equilibrium to "cancel out" $dP$ (mathematicians, please look away), giving:
+$$\frac{dT}{dr}=-\frac{\gamma-1}{\gamma}\frac{\mu m_H}{k}\frac{GM}{r^2}$$
+This is a straightforward separable differential equation:
+$$ dT = -\frac{\gamma-1}{\gamma}\frac{GM\mu m_H}{k}\frac{1}{r^2} dr$$
+Integrating gives:
+$$T=\frac{\gamma-1}{\gamma}\frac{GM\mu m_H}{k}\frac{1}{r}+C$$
+The constant can be fixed by realizing that the temperature must be $T_0$, the surface temperature of the planet, when $r=r_p$, the radius of the planet. Inserting gives:
+$$T_0=\frac{\gamma-1}{\gamma}\frac{GM\mu m_H}{k}\frac{1}{r_p}+C$$
+Which immediately implies that:
+$$C=T_0+\frac{1-\gamma}{\gamma}\frac{GM\mu m_H}{k}\frac{1}{r_p}$$
+Which finally gives the explicit dependence of temperature upon radius as:
+$$T(r)=\frac{\gamma-1}{\gamma}\frac{GM\mu m_H}{k}\left(\frac{1}{r}-\frac{1}{r_p}\right)+T_0$$
+I will model the atmosphere as transitioning to an isothermal atmosphere when $T=T_0/2$. This happens when:
+$$-\frac{T_0}{2}=\frac{\gamma-1}{\gamma}\frac{GM\mu m_H}{k}\left(\frac{1}{r}-\frac{1}{r_p}\right)$$
+Which gives:
+$$\frac{k}{GM\mu m_H}\frac{T_0\gamma}{2(\gamma-1)}=\frac{1}{r}-\frac{1}{r_p}$$
+I.e:
+$$\frac{1}{r}=\frac{1}{r_p}-\frac{T_0}{2}\frac{\gamma}{\gamma-1}\frac{k}{GM\mu m_H}$$
+From this, it is relatively straightforward to get the dependence of pressure, $P$ upon distance, seeing as:
+$$P=CT^{\frac{\gamma}{\gamma-1}}$$
+Which gives:
+$$\frac{P}{T}=CT^{1/(\gamma-1)}$$
+Thus, to find the density as a function of distance, I can simply calculate:
+$$\rho=\frac{\mu m_H}{k}\frac{P}{T}=\frac{\mu m_H}{k}CT^{1/(\gamma-1)}$$
+I can fix the constant by requiring that $\rho=\rho_0$ when $r=r_p$, which gives:
+$$\rho_0=\frac{\mu m_H}{k}CT_0$$
+I.e:
+$$C=\frac{\rho_0 k}{\mu m_H T_0}$$
+Which gives:
+$$\rho=\frac{\rho_0}{T_0}T^{1/(\gamma-1)}$$
+\subsubsection{The isothermal region}
+Once the radius is above the radius given above, we assume an isothermal atmosphere, i.e. constant temperature. This makes the equation much easier, as the hydrostatic equilibrium now reads:
+$$\frac{dP}{dr}=-\frac{GM}{r^2}\frac{\mu m_H}{kT}P$$
+Which is a separable differential equation, which can be solved as:
+$$\frac{1}{P}dP=-\frac{GM}{r^2}\frac{\mu m_H}{kT}dr$$
+Integrating gives:
+$$\ln P=\frac{GM}{r}\frac{\mu m_H}{kT}+C$$
+Or.
+$$P=\tilde{C}e^{\frac{GM}{r}\frac{\mu m_H}{kT}}$$
+The constant can be fixed by requiring that the pressure is continuous, i.e. that the pressure from the adiabatic at $r=r_{T_0/2}$ equals the initial pressure here. However, instead. I will first calculate the density, which is the more interesting function. Inserting in the ideal gas equation gives:
+$$\rho=\frac{2\mu m_H}{kT_0}Ce^{2GM\mu m_H/rkT_0}$$
+The constant can be easily fixed, by requiring that $\rho=\rho_{T_0/2}$ when $r=r_{T_0/2}$, which gives:
+$$\rho_{T/2}=\frac{2\mu m_H}{kT_0}Ce^{2GM\mu m_H/r_{T_0/2}kT_0}$$
+Which gives:
+$$C=\frac{kT_0\rho_{T_0/2}}{2\mu m_H}e^{-2GM\mu m_H/r_{T_0/2}kT_0}$$
+From which it follows that:
+$$\rho=\rho_{T_0/2}\exp\left(\frac{2GM\mu m_H}{kT_0}\left(\frac{1}{r}-\frac{1}{r_{T_0/2}}\right)\right)$$
+
+
+\end{document}
