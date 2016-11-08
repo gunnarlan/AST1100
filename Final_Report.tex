@@ -1,0 +1,373 @@
+% REMEMBER TO SET LANGUAGE!
+\documentclass[a4paper,10pt,english]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+% Standard stuff
+\usepackage{amsmath,graphicx,varioref,verbatim,amsfonts,geometry}
+% colors in text
+\usepackage[usenames,dvipsnames,svgnames,table]{xcolor}
+% Hyper refs
+\usepackage[colorlinks]{hyperref}
+
+% Document formatting
+\setlength{\parindent}{0mm}
+\setlength{\parskip}{1.5mm}
+
+%Color scheme for listings
+\usepackage{textcomp}
+\definecolor{listinggray}{gray}{0.9}
+\definecolor{lbcolor}{rgb}{0.9,0.9,0.9}
+
+%Listings configuration
+\usepackage{listings}
+%Hvis du bruker noe annet enn python, endre det her for å få riktig highlighting.
+\lstset{
+	backgroundcolor=\color{lbcolor},
+	tabsize=4,
+	rulecolor=,
+	language=python,
+        basicstyle=\scriptsize,
+        upquote=true,
+        aboveskip={1.5\baselineskip},
+        columns=fixed,
+	numbers=left,
+        showstringspaces=false,
+        extendedchars=true,
+        breaklines=true,
+        prebreak = \raisebox{0ex}[0ex][0ex]{\ensuremath{\hookleftarrow}},
+        frame=single,
+        showtabs=false,
+        showspaces=false,
+        showstringspaces=false,
+        identifierstyle=\ttfamily,
+        keywordstyle=\color[rgb]{0,0,1},
+        commentstyle=\color[rgb]{0.133,0.545,0.133},
+        stringstyle=\color[rgb]{0.627,0.126,0.941}
+        }
+        
+\newcounter{subproject}
+\renewcommand{\thesubproject}{\alph{subproject}}
+\newenvironment{subproj}{
+\begin{description}
+\item[\refstepcounter{subproject}(\thesubproject)]
+}{\end{description}}
+
+%Lettering instead of numbering in different layers
+%\renewcommand{\labelenumi}{\alph{enumi}}
+%\renewcommand{\thesubsection}{\alph{subsection}}
+
+%opening
+\title{AST1100 Project}
+\author{Gunnar Lange}
+\begin{document}
+\maketitle
+\begin{abstract}
+We present an investigation into our solar system
+\end{abstract}
+
+\tableofcontents
+\newpage
+\section{Index of common quantities}
+\begin{center}
+\begin{tabular}{c c}
+$T$ & Temperature, in Kelvin\\
+$M_{\odot}$ & Mass of the star\\
+$M_H$ & Mass of home planet\\
+$M_T$ & Mass of target planet\\
+$k$ & Boltzmann's constant\\
+$G$ & Gravitational constant\\
+$\bar{a}$ & Mean value of a
+\end{tabular}
+\end{center}
+\newpage
+\section{Introduction}
+\section{Theoretical model \& Methods}
+\subsection{Building the rocket}
+In this section we give an overview of the design of our rocket, focusing on the fuel chamber.
+\subsubsection{Theory of operation of a rocket engine}
+A rocket engine works by ejecting a mass of fuel from the bottom of the rocket. If we assume our rocket to be in deep space, far from gravitational interactions, there are no external forces acting on the rocket, and therefore momentum is conserved. Using Newton's second and third law then gives us the equation governing the motion of the rocket:
+\begin{equation}\label{eq:Force_on_rocket}
+F_{rocket}=-\frac{dp}{dt}=-\frac{d}{dt}\left(mv\right)
+\end{equation}
+Where $F_{rocket}$ is the force on the rocket, $m$ is the mass ejected and $v$ is the velocity at which this mass is ejected (exhaust velocity). Our task is therefore to find an appropriate force which we want our rocket to output, and subsequently scale the right-hand side of the equation accordingly.
+\subsubsection{Simulating an ideal gases}
+We will use an ideal gas model to model our exhaust fuel. It can be shown \textbf{THERMAL PHYSICS} that the velocity distribution in an ideal gas follows the Maxwell-Boltzmann distribution. This is a Gaussian distribution, with $\mu=0$ and $\sigma=\sqrt{kT/m}$, where $m$ is the mass of the particles and $k$ is Boltzmann's constant. With this relation, we can run simulations of gas particles, to find the momentum produced by these particles.\\
+\linebreak
+To maintain computational efficiency, we simulate only a small cell, and then let our rocket motor contain many such cells. Each cell is quadratic with length $L$. In each cell, we simulate particles with an initial velocity distribution given by the Maxwell-Boltzmann distribution (at a chosen temperature) and a uniform initial position distribution. As we are simulating an ideal gas, we neglect internal collisions of the molecules. When the particles collide with the bottom of the container, we count its mass, $m$ and its velocity component in the direction normal to the bottom, $v_i$. We then reflect the particle back into the container and reverse its velocity component. Finally we apply equation \ref{eq:Force_on_rocket} in a discretized form to calculate the force exerted by the particles on the container as:
+$$F=-\frac{2\sum mv_i}{\Delta t}$$
+Where the sum extends over all particles that hit the bottom of the container in a single time step, $\Delta t$. Note that $\Delta p = 2\sum mv_i$, as the velocity component, $v_i$, is reversed, for a total velocity change of $2v_i$. This enables us to calculate the pressure inside the container, given as:
+\begin{equation}\label{eq:Pressure_equation}
+P=\frac{\bar{F}}{L^2}
+\end{equation}
+This gives us an important consistency check for our simulations, as the expected value of the pressure can also be calculated analytically. It is shown \textbf{THERMAL PHYSICS} to equal:
+\begin{equation}\label{eq:analytic_pressure}
+P=nkT
+\end{equation}
+Where $n$ is the density of particles (particles per volume). By comparing these values from equation \ref{eq:Pressure_equation} and \ref{eq:analytic_pressure}, we can check the correctness of our simulation.\\
+\linebreak
+Finally, we make a hole in the bottom of our container, to let the particles escape. This hole is quadratic with length $L/2$. We can then simply count the number of particles escaping through the hole, and compute the force exerted on the rocket from equation \ref{eq:Force_on_rocket}. We then again reflect the particles back into the container and reverse its velocity. This is a choice which ensures a small statistical bias, as we discuss in \textbf{APPENDIX}.
+\subsubsection{Finding the number of cells and the amount of fuel needed}
+The number of cells determines the power output of our motor. We will show in section \ref{Analytic_fuel} that this does not affect the mass burned. Therefore we make an arbitrary choice; we require that our rocket should reach escape velocity from our planet within 20 minutes. As shown in \textbf{APPENDIX}, the escape velocity from a planet is generally given as:
+\begin{equation}\label{eq:escape_velocity}
+v_{esc}=\sqrt{\frac{2GM}{r^2}}
+\end{equation}
+Where $M$ is the mass of the planet, and $r$ is its radius. If we assume (somewhat unrealistically) that there is no gravity during the ascend \footnote{This may seem like a bizarre assumption, but it greatly simplifies calculations and, as earlier mentioned, the number of cells has no effect on the required fuel mass anyway.}, we can find the required number of cells from:
+$$v(t)=\int_0^t a(t')dt'=\int_0^t \frac{F}{m(t')}dt'=F\int_0^t\frac{1}{m(t')}dt'$$
+Where $m(t')=M_{sat}+M_{fuel}-\Delta m t'$. Here $M_{sat}$ is the total mass of the satellite, $M_{fuel}$ is the total mass of fuel and $F$ is the force from a single box and $\Delta m$ is the mass of particles exiting a single cell per unit time. This is thus the velocity change due to a single cell. Simulating over 20 minutes gives:
+\begin{equation}\label{eq:force_equation_one_box}
+v=F\int_0^{20}\frac{1}{M_{sat}+M_{fuel}-\Delta m t'}dt'
+\end{equation}
+Where $v$ is the velocity change due to a single cell over twenty minutes. Computing the integral gives:
+\begin{equation}\label{eq:analytic_velocity_change}
+v(t)-v_0=\frac{F}{\Delta m}\ln \frac{M_{fuel}+M_{sat}}{M_{fuel}+M_{sat}-\Delta m t}
+\end{equation}
+Assuming that the rocket starts from the surface of the planet, this gives the velocity change of a single cell as:
+$$v=\frac{F}{\Delta m}\ln\frac{M_{fuel}+M_{sat}}{M_{fuel}+M_{sat}-\Delta m t}$$
+We can then compute the number of boxes required simply by computing:
+\begin{equation}\label{eq:number_of_boxes_needed}
+N=\lceil v_{esc}/v\rceil
+\end{equation}
+So that the total velocity change over a certain time period is found by multiplying the quantities that depend on a single box in equation \ref{eq:force_equation_one_box} by $N$, giving:
+\begin{equation}\label{eq:force_equation_many_boxes}
+v(t)=NF\int_0^{t}\frac{1}{M_{sat}+M_{fuel}-N\Delta m t'}dt'
+\end{equation}
+We will find an expression for the required fuel from this equation in section \ref{Analytic_fuel}. However, to ensure the correctness of our simulation, we also compute this numerically. By choosing an $M_{fuel}$, we can iteratively compute the above, using the method described in section \textbf{REFERENCE SECTION}, until the required $\Delta v$ has been reached. We can then compute the mass used in the boost from $M_{used}=N\Delta m t$.
+\subsubsection{Analytic calculations of the required fuel}\label{Analytic_fuel}
+This section was largely inspired by Daniel Heinesen's \textbf{INSERT QUOTE}. Most of the credit goes to him. We can solve equation \ref{eq:force_equation_many_boxes} analytically, by solving the integral. This gives:
+$$v(t)-v_0=\frac{F}{\Delta m}\ln \frac{M_{fuel}+M_{sat}}{M_{fuel}+M_{sat}-N\Delta m t}$$
+Now we can employ a neat trick, originally devised by Daniel Heinsen, all credits go to him. We can simply require that we burn all fuel at the end of our burn, i.e. that $M_{fuel}-N\Delta m t=0$. This gives:
+$$v(t)=v_0+\frac{F}{\Delta m}\ln \left(1+\frac{M_{fuel}}{M_{sat}}\right)$$
+Which can be rewritten as:
+\begin{equation}\label{eq:amount_of_fuel_analytic}
+M_{fuel}=M_{sat}\left(\exp\left(\frac{\Delta m(v-v_0)}{F}\right)-1\right)
+\end{equation}
+Note that this is independent of the number of boxes - a large number of boxes means a large boost over a small time, a small number of boxes means a small boost over a large number of time. If there are no external forces doing work during the boost (as we have assumed, and which will be correct if the boost are made over a short time interval), this makes no difference. \textbf{CHECK THIS}. Note that this assumes that all fuel is burned at the end of the boost. Thus we must input all boost we desire to calculate the total fuel needed. In practice, we determine  $M_{fuel}$ from equation \ref{eq:amount_of_fuel_analytic}, and check that this gives us our required velocity change by inputting the computed $M_{fuel}$ into equation \ref{eq:force_equation_many_boxes}. \textbf{REMEMBER TO TALK ABOUT FUDGE FACTOR IN VELOCITY}
+\newpage
+\subsubsection{Parameters of the engine simulation}
+A summary of our chosen parameters for the simulation of our engine is shown in the table below:\\
+\begin{table}[!htbp]
+\caption{Parameters used in the simulation of a single cell of a rocket engine}\label{tab:particle_in_a_box}
+\begin{center}
+\begin{tabular}{|c|c|}
+\hline
+\\[-1em]
+Length of box, $L$ [m] & $10^{-6}$\\
+Number of particles & $10^5$\\
+Temperature, $T$ [K] & $10^4$\\
+Mass of satellite, $M_{sat}$ [kg] & 1100\\
+\hline
+\end{tabular}
+\end{center}
+\end{table}
+\subsection{Investigating the properties of our solar system}
+In this section we present the model of our simulated solar system. We discuss orbital calculations, as well as consistency checks for these calculations. 
+\subsubsection{Calculating the planetary orbits}
+Newton's law of gravitation, which describes the force of gravity between two objects, is given by:
+\begin{equation}
+\vec{F}_{G}=\frac{Gm_1m_2}{r^3}\vec{r}
+\end{equation}
+Where $F_G$ is the force of gravity on the first mass, $G$ is the universal gravitational constant, $m_i$ are the masses of the two objects and $\vec{r}$ is the vector pointing from $m_1$ to $m_2$. We can combine this law with Newton's second law of motion to get a set of coupled differential equations. One simplification which we impose on these equation, is to assume a coplanar orbit of our planets\footnote{This is a good assumption for most solar systems, as they are formed from a single cloud of dust. By conservation of angular momentum, if this cloud collapses, it starts to spin faster. Consequently, the systems are flattened out by the Coriolis force. For more details, see \textbf{NOTE}}. This gives us the following set of equations:
+\begin{equation}\label{eq:coupled_diff}
+\begin{split}
+\frac{d^2x}{dt^2}=\frac{F_{G,x}}{m_1}\\
+\frac{d^2 y}{dt^2}=\frac{F_{G,y}}{m_1}\\
+\end{split}
+\end{equation}
+Where $F_{G,x}$ and $F_{G,y}$ are the components of the gravitational force in the $x$and $y$ directions respectively. These equations can be reformulated as a set of first-order equations by introducing the velocity, $v$, such that:
+\begin{equation}\label{eq:Velocity_position_equation}
+\frac{dx}{dt}=v_x, \quad \quad \frac{dv_x}{dt}=\frac{F_{G,x}}{m_1}=a_x(x,y)
+\end{equation}
+And equivalently for the $y$ direction. This gives four coupled, first-order, linear, differential equations for each planet-interaction. We can solve these equations by using the leapfrog method, described \textbf{HERE}. However, we impose an additional simplification: we assume the star to be the dominant object in the solar system, and therefore ignore interplanetary forces. This is justified if the star is significantly more massive than all other planets. If this is the case, we can make one further approximation: we can let the star be stationary at the origin, and neglect the reciprocal force from the interaction of the star with the mass. With these simplifications, we can reduce the number of first order equations to $2\times$ number of planets. However, this also introduces many possible error sources. We will investigate the validity of our system in section \textbf{REFERENCE}.
+\subsubsection{The habitable zone of our solar system and choosing a target planet}
+\subsubsection{Consistency checks for our solar system}
+To ensure that our simulations are correct, it is important to have certain benchmarks to compare the results to. An example of such benchmarks would be conserved quantities. Two important conserved quantities are energy and angular momentum.\\
+\linebreak
+Mechanical energy should be conserved, because gravity is a conservative force. Thus the quantity:
+\begin{equation}\label{eq:total_energy}
+\frac{1}{2}M_pv^2-\frac{GM_{\odot} M_p}{r}
+\end{equation}
+Which is the sum of potential energy and kinetic energy, should be constant throughout the simulation. Here $M_{\odot}$ is the mass of the sun and $M_p$ is the mass of a planet. Note that the only reason why the expression for the potential energy is so simple is because we neglected the interplanetary forces and the forces on the star. If these were included, we would have to expand our definition of potential energy to include the interplanetary potentials. \\
+\linebreak
+Angular momentum should be conserved because there is no external torque. Thus the quantity:
+\begin{equation}\label{eq:angular_momentum}
+\vec{l}=M_p\vec{v}\times \vec{r}
+\end{equation}
+Should be constant for all times. Here $\vec{r}$ is the position vector of the planet with mass $M_p$.\\
+\linebreak
+Equation \ref{eq:total_energy} and \ref{eq:angular_momentum} provide an important way to check our results.
+\subsection{Orbital calculations}
+In this section we present the basic methods used to compute the orbit of our satellite. We will use a patched conic approximation, i.e. we will at each stage assume that there is only one dominating body (our home planet, the star and our target planet respectively).This approximation is valid if we are sufficiently far away from all other bodies. Whilst this will not be exact enough for our purposes, it will give us a starting point from where to start our simulations. We will attempt a hyperbolic escape from our home planet, followed by an elliptic transfer between the planets, and finally a hyperbolic capture by our target planet. We start with a brief discussion of useful units.
+\subsubsection{Choosing convenient units}
+
+\subsubsection{First phase: Departure from home planet}\label{Leaving_home_SOI_section}
+In this phase, we will assume our home planet to be the dominating object. We wish to escape from the influence of our home planet. One common way to classify this in astrodynamics is through the idea of a \textit{sphere of influence}. This is an imaginary sphere around our planets, within which the patched conic approximation is assumed to hold \textbf{REFERENCE}. The idea is to investigate where the force from the closer, but less massive, object is larger than the force from the distant but massive object. The exact mathematical treatment of this topic requires perturbation theory, and is therefore not discussed here. The interested reader may find a rigorous treatment of this subject \textbf{HERE}. There it is shown that the radius of the sphere of influence, $r_{soi}$ is approximately equal to:
+\begin{equation}\label{eq:rSOI}
+r_{soi}\approx a\left(\frac{M_H}{M_{\odot}}\right)^{2/5}
+\end{equation}
+Where $a$ is the distance from the planet to the star (we will use the major axis of the planet), $M_H$ is the mass of the home planet and $M_{\odot}$ is the mass of our star. Note that $r_{soi}$ describes the distance \textit{from the home planet} at which we can largely neglect the influence of the home planet. This approximation is valid if $M_{\odot}>>M_H$, and $M_H>>M_{sat}$, i.e. that the star is significantly heavier than the planet, and the planet is significantly heavier than the satellite. Furthermore, the approximation is only valid if $r_{soi}>>r$, i.e. that the planet is not too close to the star. All of these conditions are satisfied in our case,as can be seen from the table of values in \textbf{APPENDIX}.\\
+\linebreak
+We wish to make a hyperbolic escape of our satellite out to at least this height, from the surface of the planet. The boost needed to achieve this can be computed from energy considerations. Equation \ref{eq:total_energy} describes the energy in orbital motion. Note that the satellite has zero initial velocity relative to the planet. Thus the total initial energy of the satellite, $E_{tot, i}$, at the surface of the planet, is given by:
+$$E_{tot, i}=-\frac{GM_HM_{sat}}{r_p}$$
+Where $r_p$ is the radius of the planet. The total potential in orbit, at a height of $r_{soi}$ from the planet, $E_{pot,SOI}$, is given by:
+$$E_{pot, SOI}=\frac{1}{2}mv^2-\frac{GM_HM_{sat}}{r_{SOI}}$$
+Thus the energy difference, $\Delta E$, is:
+$$\Delta E = GM_HM_{sat}\left(\frac{1}{r_p}-\frac{1}{r_{SOI}}\right)$$
+This is thus the energy which we must give our satellite, in the form of kinetic energy, $1/2M_{sat}v^2$. Equating these expression gives us:
+\begin{equation}\label{eq:Delta_v_SOI}
+v=\sqrt{2GM_H\left(\frac{1}{r_p}-\frac{1}{r_{SOI}}\right)}
+\end{equation}
+This is thus the velocity which we must give the satellite to get it a distance $r_{SOI}$ away from the planet. Note that this is the velocity \textit{relative to the planet}, as we assumed zero initial velocity of the satellite.
+\subsubsection{Second phase: Interplanetary space}
+\textbf{Determining the magnitude and direction of required boost}\\
+Once we have arrived at the sphere of influence, we can commence the next stage of the patched conic approximation. This is an elliptic transfer. We now consider our satellite to be in an orbit around our star. This orbit will in general be elliptic, with an eccentricity close to that of the orbit of our home planet\footnote{This follows from energy considerations: we have only slightly increased the energy of our satellite, and it is still at approximately the same distance from the sun. Thus, if it orbit the sun, it should have a similar eccentricity. \textbf{ASK ROBERT}}. As can be seen in the table in \textbf{APPENDIX}, this eccentricity is fairly low, i.e. the planet is in an almost circular orbit. We will therefore approximate the orbit of our satellite as a circular orbit around the sun, as this greatly simplifies the calculations. The error introduced by this will only be added to the error introduced by the patched conic approximation however. Consequently we will only need to tweak an already existent correction factor. Therefore, this assumption does not significantly complicate our problem.\footnote{The avid reader may wonder why we do not simply boost the satellite into a circular orbit, using the equation derived in \textbf{REFERENCE}. This is because there are already errors which require a correction factor. Therefore we do not gain much by boosting into a circular orbit.}\\
+\linebreak
+The reason for approximating the orbit as circular, is because of the existence of a famous analytic solution for transferring the satellite between to circular orbits, first published by German scientist Walter Hohmann - the Hohmann transfer. This transfer is famous for being the most fuel-efficient transfer \textbf{REFERENCE}. The idea of the transfer is to increase the velocity of a spacecraft in a circular orbit. This increase is done along the direction, so that the spacecraft enters an elliptical orbit. The major axis of this ellipses is chosen in such a manner that it coincides with the major axis of the orbit of  the target planet. The idea is then to hit our target planet precisely, so that we can boost directly into an orbit around our target planet from the elliptical orbit. The idea of the Hohmann transfer orbit is illustrated in the figure \textbf{BELOW}\\
+\linebreak
+The rigorous mathematical treatment of this subject, whilst not difficult, takes us to far afield. The full derivation of the Hohmann transfer equations can be found \textbf{REFERENCE}. There, it is shown that the \textit{change} in velocity needed from the circular orbit to the elliptical orbit, $\Delta v$, is given by:
+\begin{equation}\label{eq:Hohmann}
+\Delta v=\sqrt{\frac{GM_{\odot}}{r_1}}\left(\sqrt{\frac{2r_2}{r_1+r_2}}-1\right)
+\end{equation}
+Where $r_1$ and $r_2$ are the radius of the two circular orbits - in our case, this is given (approximately)  by the initial distances of the planets to the star at the time of launch, $t_0$. This gives the magnitude of the boost. The direction is, as earlier stated, along the velocity vector of the satellite. With this determined, all that remains to get close to our target planet is to determine the time of launch, $t_0$.\\
+\linebreak
+\textbf{Determining the launch time, $t_0$}\\
+Note that we are boosting into an elliptical orbit with major axis given by:
+$$a=\frac{r_1+r_2}{2}$$
+Note, however, that we do not know the parameters $r_1$ and $r_2$ yet, as they are the distance of the planets from the target at $t=t_0$. We will therefore approximate these values with the major axis of the planets, $a_1$ and $a_2$. Now we employ Kepler's third law, as stated \textbf{HERE}. This gives us approximately:
+$$\frac{T^2}{a^3}= \frac{4\pi^2}{GM_{\odot}}$$
+Note that this is only valid if the mass of the star is much larger than all other masses, which is indeed the case here. Inserting and solving gives:
+$$T=\sqrt{\frac{\pi^2(a_1+a_2)^3}{2GM_{\odot}}}$$
+Note that, as illustrated in the \textbf{FIGURE}, we start the transfer at the perihelion of the ellipse and want to hit our planet at aphelion. This is only halfway around the ellipse, so that the relevant timeframe for our simulation is:
+\begin{equation}\label{eq:orbital_period}
+T_s=\pi\sqrt{\frac{(a_1+a_2)^ 3}{8GM_{\odot}}}
+\end{equation}
+This gives us the time taken to transfer between the orbits. From this, we can easily find the required start-time. Note that we wish the target planet to be at an angle of $\pi$ radians from our starting position when we impact it, as shown in \textbf{FIGURE}. Thus, after the time $T_s$, the planet should be at an angle $\pi$ from our initial angle. The angular velocity of the target planet, $\omega_T$ can be found by once again applying Kepler's third law, which gives (using that $\omega=2\pi/T$):
+\begin{equation}
+\omega_T=\sqrt{\frac{GM_{\odot}}{a_2^3}}
+\end{equation}
+The initial alignment, $\phi$, should then be:
+\begin{equation}\label{eq:angular_alignment}
+\phi = \pi - \omega_TT_s
+\end{equation}
+If this is the case, the target planet is exactly at an angle $\pi$ from the initial position of the home planet after a time $T_s$. Thus we can numerically find the time, $t_0$ at which we want to launch the satellite, by requiring that the angle between the planets, $\phi$ at $t_0$ equals the angle dictated by equation \ref{eq:angular_alignment}.
+\subsubsection{Third phase: Arrival at target planet}\label{arriving_at_planet_section}
+To commence the last phase of our patched conic approximation, we must be close enough to our target planet to achieve a stable orbit. This is in general, once again a question that must be answered by perturbation theory. Notice, that the sphere of influence description provided in section \ref{Leaving_home_SOI_section} is no longer useful, as we are now looking to attain a stable orbit over an extended period of time. It is therefore not sufficient to be far enough out that the forces from the planet are stronger - all other forces must be \textit{utterly} negligible to achieve a stable orbit with reasonably large timesteps. We decide to impose a simple condition: we require the force from the planet to be $k$ times stronger than the force from the sun, and then conduct numerical experiments to establish an appropriate value of $k$. Note that it is rather straightforward to establish the radius at which this occurs, simply by requiring that the force from the planet be $k$ times stronger than the force from the star, i.e:
+$$\frac{GM_TM_{sat}}{r^2}=k\frac{GM_{\odot}M_{sat}}{R^2}$$
+Where $r$ is the satellite-planet distance, $R$ is the satellite-star distance and $M_T$ is the mass of the target planet. Solving, gives:
+\begin{equation}\label{eq:part3_k_equation}
+r=R\sqrt{\frac{M_T}{M_{\odot}}\frac{1}{k}}
+\end{equation}
+We find numerically that choosing $k=10$ gives a sufficiently stable orbit over multiple years.\\
+\linebreak
+Now that we know the distance to the planet at which we wish to arrive, we need to find what boost (direction and magnitude) we need to give the satellite in order to achieve a stable circular orbit around our target  planet. The magnitude is easily found by equating centripetal acceleration to the gravitational force:
+$$G\frac{M_TM_{sat}}{r^2}=M_{sat}\frac{v_{SO}^2}{r}$$
+Where $r$ is the satellite-planet distance and $v_{SO}$ is the speed of the satellite \textit{relative to the planet} necessary for a stable orbit. Solving for the speed gives:
+\begin{equation}\label{eq:circular_motion_velocity}
+v_{SO}=\sqrt{\frac{GM_T}{r}}
+\end{equation}
+The direction can be found from geometric considerations. Consider the situation shown in the \textbf{FIGURE}.\\
+\linebreak
+Let us assume that the satellite orbits clockwise (otherwise we must simply flip all signs). Note that, for circular motion, the velocity must be orthogonal to the position vector. Consider the situation where $\phi=0$. Then it is clear that all velocity must be in the y-direction. On the other hand, if $\phi=\pi/2$, all velocity must be in the \textit{negative} x-direction. From this, and elementary trigonometry, it follows that the velocity of the satellite in orbit must be:
+$$\vec{v}_{SO}=\begin{pmatrix}
+-v_{SO}\sin \phi\\
+v_{SO}\cos \phi
+\end{pmatrix}$$
+To find the boost required, we must find the \textit{change} in velocity, $\Delta v_{SO}$. This is given by the final velocity of the satellite, $\vec{v}_{SO}$, minus the initial velocity of the satellite, $\vec{v}_0$. This velocity can easily be found by decomposing the vector $\vec{v}_0$ in the \textbf{FIGURE}. By a similar argument as earlier, $v_0$ is purely in the $x$-direction if $\chi$ is zero, and it is purely in the $y$-direction if $\chi$ is $\pi/2$. Thus:
+$$\vec{v}_0=\begin{pmatrix}
+v_0\cos \chi\\
+v_0\sin \chi
+\end{pmatrix}$$
+Thus subtracting $\vec{v}_0$ from $\vec{v}_{SO}$ gives the direction and magnitude of the boost:
+\begin{equation}
+\Delta \vec{v}_{circ}=\begin{pmatrix}
+-v_{SO}\sin \phi - v_0\cos \chi\\
+v_{SO}\cos \phi - v_0\sin \chi
+\end{pmatrix}
+\end{equation}
+The velocities of the planets can easily be found with a forward Euler scheme, as described \textbf{REFERENCE}. Note, however, that this is all relative to the planet. In our system, however, the sun is at rest at the origin and all planets move. Therefore, we must implement that $\vec{v}_0=\vec{v}_{sat}-\vec{v}_T$, where $\vec{v}_{sat}$ is the velocity of the satellite and $\vec{v}_T$ is the velocity of the target planet. Note further, that the angles are also given relative to the planet. We can find $\phi$ by realizing that:
+$$\tan \phi = \frac{y_{sat}}{x_{sat}}$$
+Where $x_{sat}$ and $y_{sat}$ are the components of the relative position, $\vec{r}_{ST}$ between the satellite and the planet, given by $\vec{r}_{ST}=\vec{r}_S-\vec{r}_T$, where  $\vec{r}_S$ is the position of the satellite and $\vec{r}_T$ is the position of the target planet. Thus we can compute the vector $\vec{v}_{SO}$. Once this has been found, we can easily compute $\Delta v_{circ}$, without computing $\chi$, as we can simply compute $\vec{v}_0=\vec{v}_{sat}-\vec{v}_T$, and then subtract $\vec{v}_0$ from our calculated $\vec{v}_{SO}$. 
+\subsubsection{Method}
+\textbf{Computing the total boost}\\
+An important realization is that the two boosts we plan to perform are both in the direction of the velocity vector. From this, it follows that we can add these boost together, and simply leave our planet with a total velocity change, $\Delta v$ given by the sum of equation \ref{eq:Delta_v_SOI} and \ref{eq:Hohmann}, along the direction of the velocity vector.\\
+\linebreak
+\textbf{Adjusting our parameters in the simulation}\\
+In section \ref{Leaving_home_SOI_section} to \ref{arriving_at_planet_section}, we have made a significant number of simplifications. We must therefore conduct numerical experiments to find the correction factors required for both the start time, $t_0$ and the boosts, $\Delta v$.\\
+\linebreak
+Ideally, we want as low $\Delta v$ as possible, to minimize fuel usage. However, we need enough $\Delta v$ to hit the planet. Ideally, we should hit the target planet with a low velocity-, to get into a circular orbit without having to reverse our velocity. Thus $t_0$ and $\Delta v$ should be chosen such that $\Delta v$ is as low as possible, so that we pass behind the target planet with as low velocity as possible. This gives us a way to check our chosen correction factors. Thus we guess a set of correction factors, and adjust them up or down, each time evaluating if we have gotten closer to our ideal situation or not.\\
+\linebreak
+\textbf{Implementing safety margins for the real launch}\\
+Whilst it is possible to adjust $\Delta v$ and $t_0$ so that the satellite hits perfectly in our simulation, this is a waste of time, as there may be errors in our real launch which prevent us from reaching the required precision. We therefore implement a safety margin: we make an additional, small, boost, $\Delta v_b$ in the direction of the planet once we are less than $0.01 \mathrm{AU}$ away from the planet. This small boost ensures that we hit the planet, and do not fly past it. The direction of the boost should be in the general direction of the planet. However, by the time the satellite arrives there, the planet will have moved. Therefore we boost towards where the planet will be at at time $\Delta t_b$ from now  instead. The magnitude of $\Delta v_b$ and $\Delta t_b$ can be determined by numerical experiments, as described in the previous section.\\
+\linebreak
+One additional safety feature which we implement is that we add enough fuel to boost an additional $10\%$ of the total velocity, i.e. we compute $\Delta v$, $\Delta v_b$ and $\Delta v_{circ}$ and then let our fuel estimate be given by the amount of fuel necessary to reach a velocity $v=1.1(\Delta v+\Delta v_1+\Delta v_{circ})$. This ensure that we have enough fuel to fine-tune our position in the real launch.\\
+\linebreak
+\textbf{Numerical considerations}\\
+For this part of the project, we use different timesteps at different positions. Clearly, we need small timesteps whenever there is large acceleration. Thus, we use small timesteps close to the home planet and the target planet. Once we are more than 0.1 Au away from either planets, however, we use larger timesteps, to reduce computation time.
+\subsubsection{Parameters}
+All parameters found through our numerical simulation are summarized in the table below:
+\subsection{Orientating the satellite in interplanetary space}
+Orientation in interplanetary space is not an easy task, due to the isotropic nature of space - there are few waypoints. For the real launch, however, we will need to find our position, velocity and orientation at any point in time. In this section, we will discuss how to do this.
+\subsubsection{Finding the position of the satellite in interplanetary space}\label{triangulate_position}
+We have a radar aboard our satellite, which enables us to determine the distance to all planets, as well as the sun. We can then use a version of a triangulation algorithm to find our position.\\
+\linebreak
+The idea is illustrated in \textbf{FIGURE}. We know the distance from the satellite to the planet/star, $r$, and thus we know that the satellite is somewhere on a circle with radius $r$ around the celestial object. By using three different celestial objects, we should be able to find the point where all three circles intersect, which will be the position of the satellite..\\
+\linebreak
+The general equations for tree circles is given by:
+\begin{equation}\label{eq:first_circle}
+(x-a)^2+(y-b)^2=r_1^2
+\end{equation}
+\begin{equation}\label{eq:second_circle}
+(x-c)^2+(y-d)^2= r_2^2
+\end{equation}
+\begin{equation}\label{eq:third_circle}
+(x-e)^2+(y-f)^2=r_3^2
+\end{equation}
+These three equations can be solved analytically to find the intersection point. We begin by solving equation \ref{eq:first_circle} and \ref{eq:second_circle}. The details can be found in  appendix \ref{ap:solving_triangulation}, but it results in the following equations for $x$ and $y$:
+\begin{equation}\label{eq:triangulation_y}
+y_{1,2}=\frac{-2(\gamma\lambda-b)\pm \sqrt{4(\gamma \lambda - b)^2 -4(\lambda^2+1)(\gamma^2+b^2-r_1^2)}}{2(\lambda^2+1)}
+\end{equation}
+\begin{equation}
+x_{1,2}=\lambda y +\gamma +a
+\end{equation}
+Where:
+$$\gamma = \frac{r_1^2+c^2+d^2-a^2-b^2-r_2^2}{2(c-a)}-a$$
+$$\lambda = \frac{b-d}{c-a}$$
+The points $(x_1, y_1)$ and $(x_2, y_2)$ can then be inserted into equation \ref{eq:third_circle}. The points which satisfy equation \ref{eq:third_circle} (or almost satisfy, due to numerical errors), give the position of the satellite.\\
+\linebreak
+Note that there is one potential problem with this method: if any of the three circles are collinear, the method fails, as it is no longer possible to find a unique tangent point. To accommodate for this, we test with the sun and multiple planets, discarding the solutions where both $(x_1, y_1)$ and $(x_2, y_2)$ give an answer close to 0 in equation \ref{eq:third_circle}. Specifically, we always test with the sun, and then iterate through all the other planets, taking pairs of two.
+ 
+\subsubsection{Finding the velocity of the satellite in interplanetary space}
+The velocity of the Satellite can be determined by considering the Doppler shift of two distant stars as seen from our home planet and as seen from the satellite, which is equipped with a spectroscope.
+\subsubsection{Finding the orientation of the satellite in interplanetary space}
+\subsection{Investigating our target planet}
+\subsection{Landing on our target planet}
+\subsection{A brief investigation into the way our solar system appears from afar}
+\begin{appendix}
+\section{Numerical methods}
+MAKE THIS MAIN
+\section{Solving the triangulation equation}\label{ap:solving_triangulation}
+Here we complete the calculations from section \ref{triangulate_position}.\\
+\linebreak
+I will begin by solving the equation \ref{eq:first_circle} and \ref{eq:second_circle}, and then simply check which of the resulting points fit equation \ref{eq:third_circle}. Writing equations \ref{eq:first_circle} and \ref{eq:second_circle} out gives:
+$$x^2 - 2ax+a^2+y^2-2yb+b^2 -r_1^2 = 0$$
+$$x^2 - 2xc + c^2 + y^2 - 2yd + d^2 - r_2^2 =0$$
+Subtracting:
+$$2x(c-a)+2y(d-b)+a^2+b^2-c^2-d^2 +r_2^2 - r_1^2 = 0$$
+This equation can now be explicitly solved for $x$, giving:
+$$x=\frac{r_1^2+c^2+d^2+2y(b-d)-a^2-b^2-r_2^2}{2(c-a)}$$
+Let us define:
+$$\gamma = \frac{r_1^2+c^2+d^2-a^2-b^2-r_2^2}{2(c-a)}-a$$
+$$\lambda = \frac{b-d}{c-a}$$
+Then:
+$$(x-a)=\lambda y + \gamma$$
+Which gives, when inserted:
+$$(\lambda y + \gamma)^2+(y-b)^2-r_1^2=0$$
+Writing this out gives:
+$$\left(\lambda y\right)^2+2\gamma \lambda y +\gamma^2 + y^2 - 2yb+b^2-r_1^2=0$$
+Which can be rearranged to give:
+$$(\lambda^2 +1)y^2+2(\gamma \lambda -b)y+\gamma^2+b^2-r_1^2=0$$
+This is a quadratic equation, which can be solved to give:
+$$y_{1,2}=\frac{-2(\gamma\lambda-b)\pm \sqrt{4(\gamma \lambda - b)^2 -4(\lambda^2+1)(\gamma^2+b^2-r_1^2)}}{2(\lambda^2+1)}$$
+Each of these $y_s$ can be inserted into the $x$ equation above, to also give a possible $x$-position. These two possible positions can be compared to the final equation to give the correct position.
+\section{Pertinent parameters}
+\end{appendix}
+\end{document}
