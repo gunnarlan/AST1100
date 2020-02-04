@@ -1,8 +1,10 @@
-# AST1100 - Introduction to astrophysics
+# AST1100 - Introduction to Astrophysics
 
 This repository contains coursework from the course  AST1100 - Introduction to astrophysics at the University of Oslo, which I undertook in the autumn semester of 2016.
 
 A full description of the project can be found in the notes folder. My source code is in the src folder, and the final report is in the PDF file.
+
+The course webpage is [here](https://www.uio.no/studier/emner/matnat/astro/nedlagte-emner/AST1100/index-eng.html). This describes the course content and learning outcomes.
 
 I cannot guarantee that everything is entirely correct.
 
